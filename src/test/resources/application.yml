@@ -8,7 +8,7 @@ spring: #스프링 부트에서 기본적으로 아무런 설정이 없으면 �
 
 #  jpa:
 #    hibernate:
-#      ddl-auto: create #application 실행시점에 entity정보 지우고 재생성
+#      ddl-auto: create-drop  #완전히 다 끝난 후 자원정리까지 해준다.
 #    properties:
 #      hibernate:
 ##        show_sql: true
