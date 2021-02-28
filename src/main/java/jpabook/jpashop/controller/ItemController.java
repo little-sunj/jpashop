@@ -62,19 +62,14 @@ public class ItemController {
     }
 
     @PostMapping("items/{itemId}/edit")
-    public String updateItem(@PathVariable String itemId, @ModelAttribute("form") BookForm form) {
+    public String updateItem(@PathVariable Long itemId, @ModelAttribute("form") BookForm form) {
 
         //실제로는 itemId 검증하는 로직을 추가해야한다.
-        
-        Book book = new Book();
-        book.setId(form.getId());
-        book.setName(form.getName());
-        book.setPrice(form.getPrice());
-        book.setStockQuantity(form.getStockQuantity());
-        book.setAuthor(form.getAuthor());
-        book.setIsbn(form.getIsbn());
 
-        itemService.saveItem(book);
+        //필요한 데이터만 받아 update. update할 것이 많다면 별도 DTO를 뽑는다.
+        //트랜젝션이 있는 서비스 계층에 식별자(`id`)와 변경할 데이터를 명확하게 전달한다.
+        itemService.updateItem(itemId, form.getName(), form.getPrice(), form.getStockQuantity());
+
         return "redirect:/items";
     }
 }
