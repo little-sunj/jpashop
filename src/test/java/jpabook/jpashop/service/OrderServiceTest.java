@@ -5,6 +5,8 @@ import jpabook.jpashop.domain.Member;
 import jpabook.jpashop.domain.Order;
 import jpabook.jpashop.domain.OrderStatus;
 import jpabook.jpashop.domain.item.Book;
+import jpabook.jpashop.domain.item.Item;
+import jpabook.jpashop.exception.NotEnoughStockException;
 import jpabook.jpashop.repository.OrderRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -27,16 +29,8 @@ class OrderServiceTest {
     @Test
     public void order() throws Exception {
         //given
-        Member member = new Member();
-        member.setName("회원1");
-        member.setAddress(new Address("서울", "강가", "123-123"));
-        em.persist(member);
-
-        Book book = new Book();
-        book.setName("시골 JPA");
-        book.setPrice(10000);
-        book.setStockQuantity(10);
-        em.persist(book);
+        Member member = createMember();
+        Book book = createBook("시골 JPA", 10000, 10);
 
         //when
         int orderCount = 2;
@@ -52,22 +46,62 @@ class OrderServiceTest {
 
     }
 
+
     @Test
-    public void cancel() throws Exception {
+    public void orderStockQuantityExceed() throws Exception {
         //given
+        Member member = createMember();
+        Item item = createBook("시골 JPA", 10000, 10);
+
+        int orderCount = 11;
 
         //when
+        //orderService.order(member.getId(), item.getId(), orderCount);
 
         //then
+        //fail("재고 수량 부족 예외가 발생해야 한다.");
+
+        NotEnoughStockException ex = assertThrows(NotEnoughStockException.class, () -> {
+            orderService.order(member.getId(), item.getId(), orderCount);
+        });
+        assertEquals(ex.getMessage(), "need more stock");
     }
 
     @Test
-    public void stockQuantityExceed() throws Exception {
+    public void cancel() throws Exception {
         //given
+        Member member = createMember();
+        Item item = createBook("시골 JPA", 10000, 10);
 
+        int orderCount = 2;
+
+        Long orderId = orderService.order(member.getId(), item.getId(), orderCount);
         //when
+        orderService.cancelOrder(orderId);
+
 
         //then
+        Order getOrder = orderRepository.findOne(orderId);
+
+        assertEquals(OrderStatus.CANCEL, getOrder.getStatus(), "주문 취소시 상태는 CANCEL이다.");
+        assertEquals(10, item.getStockQuantity(), "주문이 취소된 상품은 그만큼 재고가 증가해야 한다.");
+    }
+
+    private Book createBook(String name, int orderPrice, int quantity) {
+        Book book = new Book();
+        book.setName(name);
+        book.setPrice(orderPrice);
+        book.setStockQuantity(quantity);
+        em.persist(book);
+        return book;
+    }
+
+    private Member createMember() {
+        Member member = new Member();
+        member.setName("회원1");
+        member.setAddress(new Address("서울", "강가", "123-123"));
+        em.persist(member);
+        return member;
     }
 
 }
